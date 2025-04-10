@@ -162,7 +162,7 @@ try {
                     </tr>
                 <?php endforeach; ?>
                 <tr class="table-primary fw-bold">
-                    <td colspan="2" class="text-end">Total Acumulado:</td>
+                    <td colspan="2" class="text-end">TOTAL DE GASTOS:</td>
                     <td>$<?= number_format($total, 2) ?></td>
                 </tr>
             </tbody>

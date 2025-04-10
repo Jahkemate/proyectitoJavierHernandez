@@ -2,8 +2,8 @@
 require_once 'conexion.php';
 
 $errores = [];
-$exito = '';
 
+// --- Registro de gasto ---
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $nombre = trim($_POST['nombre'] ?? '');
     $tipoGasto = $_POST['tipoGasto'] ?? '';
@@ -32,11 +32,24 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 ':tipoGasto' => $tipoGasto,
                 ':valorGasto' => $valorGasto
             ]);
-            $exito = "¡Gasto registrado con éxito!";
+
+            // Redirigir después del POST para evitar duplicación al recargar
+            header("Location: " . $_SERVER['PHP_SELF'] . "?exito=1");
+            exit;
+
         } catch (PDOException $e) {
             $errores[] = "Error al guardar en la base de datos.";
         }
     }
+}
+
+// --- Consulta de gastos ---
+try {
+    $stmt = $pdo->query("SELECT nombre, tipoGasto, valorGasto FROM gastos ORDER BY codigoGasto DESC");
+    $gastos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $total = array_sum(array_column($gastos, 'valorGasto'));
+} catch (PDOException $e) {
+    die("Error al obtener los datos: " . $e->getMessage());
 }
 ?>
 
@@ -44,7 +57,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Registrar Gasto</title>
+    <title>Registro y Listado de Gastos</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="p-3 mb-2 bg-warning-subtle text-warning-emphasis">
@@ -52,6 +65,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 <div class="container mt-5">
     <h2 class="mb-4">Registrar Gastos Familiares</h2>
 
+    <!-- Mostrar errores -->
     <?php if (!empty($errores)): ?>
         <div class="alert alert-danger">
             <ul>
@@ -60,13 +74,15 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 <?php endforeach; ?>
             </ul>
         </div>
-    <?php elseif ($exito): ?>
+    <!-- Mostrar mensaje de éxito -->
+    <?php elseif (isset($_GET['exito']) && $_GET['exito'] == '1'): ?>
         <div class="alert alert-success">
-            <?= htmlspecialchars($exito) ?>
+            ¡Gasto registrado con éxito!
         </div>
     <?php endif; ?>
 
-    <form method="POST" action="" class="card p-4 shadow-sm">
+    <!-- Formulario -->
+    <form method="POST" action="" class="card p-4 shadow-sm mb-5">
         <div class="mb-3">
             <label class="form-label">Nombre de la persona</label>
             <input type="text" name="nombre" class="form-control" maxlength="80" required>
@@ -90,6 +106,36 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
         <button type="submit" class="btn btn-success">Registrar Gasto</button>
     </form>
+
+    <!-- Tabla de gastos -->
+    <h3 class="mb-3">Gastos Registrados</h3>
+
+    <?php if (count($gastos) > 0): ?>
+        <table class="table table-success table-bordered table-striped shadow-sm">
+            <thead class="table-dark">
+                <tr>
+                    <th>Nombre</th>
+                    <th>Tipo de Gasto</th>
+                    <th>Valor</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($gastos as $gasto): ?>
+                    <tr>
+                        <td><?= htmlspecialchars($gasto['nombre']) ?></td>
+                        <td><?= htmlspecialchars($gasto['tipoGasto']) ?></td>
+                        <td>$<?= number_format($gasto['valorGasto'], 2) ?></td>
+                    </tr>
+                <?php endforeach; ?>
+                <tr class="table-primary fw-bold">
+                    <td colspan="2" class="text-end">Total Acumulado:</td>
+                    <td>$<?= number_format($total, 2) ?></td>
+                </tr>
+            </tbody>
+        </table>
+    <?php else: ?>
+        <div class="alert alert-info">No hay gastos registrados aún.</div>
+    <?php endif; ?>
 </div>
 
 </body>

@@ -1,6 +1,6 @@
 <?php
 $conexion = new PDO(
-    "mysql:dbname=proyectito;127.0.0.1,",
+    "mysql:dbname=u768712027_bdd_gastos;127.0.0.1,",
     "root",
     ""
 );

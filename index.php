@@ -45,7 +45,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
 // --- Consulta de gastos ---
 try {
-    $stmt = $pdo->query("SELECT nombre, tipoGasto, valorGasto FROM gastos ORDER BY codigoGasto DESC");
+    $stmt = $pdo->query("SELECT codigoGasto, nombre, tipoGasto, valorGasto FROM gastos ORDER BY codigoGasto DESC");
     $gastos = $stmt->fetchAll(PDO::FETCH_ASSOC);
     $total = array_sum(array_column($gastos, 'valorGasto'));
 } catch (PDOException $e) {
@@ -81,15 +81,21 @@ try {
         </div>
     <?php endif; ?>
 
+    <?php if (isset($_GET['eliminado'])): ?>
+    <div class="alert alert-success">
+        Gasto eliminado correctamente.
+    </div>
+<?php endif; ?>
+
     <!-- Formulario -->
     <form method="POST" action="" class="card p-4 shadow-sm mb-5">
         <div class="mb-3">
-            <label class="form-label">Nombre de la persona</label>
+            <label class="form-label fw-bold">Nombre</label>
             <input type="text" name="nombre" class="form-control" maxlength="80" required>
         </div>
 
         <div class="mb-3">
-            <label class="form-label">Tipo de gasto</label>
+            <label class="form-label fw-bold">Tipo de gasto</label>
             <select name="tipoGasto" class="form-select" required>
                 <option value="">Seleccione</option>
                 <option value="Alimentacion">Alimentación</option>
@@ -100,7 +106,7 @@ try {
         </div>
 
         <div class="mb-3">
-            <label class="form-label">Valor del gasto</label>
+            <label class="form-label fw-bold">Valor del gasto</label>
             <input type="number" name="valorGasto" class="form-control" step="0.01" min="0.01" required>
         </div>
 
@@ -117,6 +123,7 @@ try {
                     <th>Nombre</th>
                     <th>Tipo de Gasto</th>
                     <th>Valor</th>
+                    <th>Acciones</th>
                 </tr>
             </thead>
             <tbody>
@@ -125,6 +132,11 @@ try {
                         <td><?= htmlspecialchars($gasto['nombre']) ?></td>
                         <td><?= htmlspecialchars($gasto['tipoGasto']) ?></td>
                         <td>$<?= number_format($gasto['valorGasto'], 2) ?></td>
+                        <td class="d-flex gap-2">  
+                            <a href="editar_gasto.php?id=<?= $gasto['codigoGasto'] ?>"class="btn btn-info">Editar</a>
+                            <a href="eliminar_gasto.php?id=<?= $gasto['codigoGasto'] ?>" class="btn btn-sm btn-danger">Eliminar</a>
+                        </td>
+                        
                     </tr>
                 <?php endforeach; ?>
                 <tr class="table-primary fw-bold">

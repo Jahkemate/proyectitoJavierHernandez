@@ -45,12 +45,26 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
 // --- Consulta de gastos ---
 try {
-    $stmt = $pdo->query("SELECT codigoGasto, nombre, tipoGasto, valorGasto FROM gastos ORDER BY codigoGasto DESC");
+    $busqueda = trim($_GET['busqueda'] ?? '');
+
+    if ($busqueda !== '') {
+        $sql = "SELECT codigoGasto, nombre, tipoGasto, valorGasto 
+                FROM gastos 
+                WHERE nombre LIKE :busqueda OR tipoGasto LIKE :busqueda 
+                ORDER BY codigoGasto DESC";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([':busqueda' => "%$busqueda%"]);
+    } else {
+        $stmt = $pdo->query("SELECT codigoGasto, nombre, tipoGasto, valorGasto FROM gastos ORDER BY codigoGasto DESC");
+    }
+
     $gastos = $stmt->fetchAll(PDO::FETCH_ASSOC);
     $total = array_sum(array_column($gastos, 'valorGasto'));
+
 } catch (PDOException $e) {
     die("Error al obtener los datos: " . $e->getMessage());
 }
+
 ?>
 
 <!DOCTYPE html>
@@ -117,6 +131,14 @@ try {
     <h3 class="mb-3">Gastos Registrados</h3>
 
     <?php if (count($gastos) > 0): ?>
+
+        <form method="GET" action="index.php" class="mb-4 d-flex gap-2">
+    <input type="text" name="busqueda" class="form-control" placeholder="Buscar por nombre o tipo de gasto" value="<?= htmlspecialchars($_GET['busqueda'] ?? '') ?>">
+    <button type="submit" class="btn btn-warning">Buscar</button>
+    
+</form>
+
+
         <table class="table table-success table-bordered table-striped shadow-sm">
             <thead class="table-dark">
                 <tr>
